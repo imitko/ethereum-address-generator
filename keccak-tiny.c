@@ -51,7 +51,7 @@ static inline void keccakf(void* state) {
   uint8_t x, y;
 
   for (int i = 0; i < 24; i++) {
-    // Theta
+    /* Theta */
     FOR5(x, 1,
          b[x] = 0;
          FOR5(y, 5,
@@ -59,21 +59,21 @@ static inline void keccakf(void* state) {
     FOR5(x, 1,
          FOR5(y, 5,
               a[y + x] ^= b[(x + 4) % 5] ^ rol(b[(x + 1) % 5], 1); ))
-    // Rho and pi
+    /* Rho and pi */
     t = a[1];
     x = 0;
     REPEAT24(b[0] = a[pi[x]];
              a[pi[x]] = rol(t, rho[x]);
              t = b[0];
              x++; )
-    // Chi
+    /* Chi */
     FOR5(y,
        5,
        FOR5(x, 1,
             b[x] = a[y + x];)
        FOR5(x, 1,
             a[y + x] = b[x] ^ ((~b[(x + 1) % 5]) & b[(x + 2) % 5]); ))
-    // Iota
+    /* Iota */
     a[0] ^= RC[i];
   }
 }
@@ -98,13 +98,13 @@ static inline void keccakf(void* state) {
     FOR(i, 1, len, S);                                               \
   }
 
-mkapply_ds(xorin, dst[i] ^= src[i])  // xorin
-mkapply_sd(setout, dst[i] = src[i])  // setout
+mkapply_ds(xorin, dst[i] ^= src[i])  /* xorin */
+mkapply_sd(setout, dst[i] = src[i])  /* setout */
 
 #define P keccakf
 #define Plen 200
 
-// Fold P*F over the full blocks of an input.
+/* Fold P*F over the full blocks of an input. */
 #define foldP(I, L, F) \
   while (L >= rate) {  \
     F(a, I, rate);     \
@@ -121,19 +121,19 @@ static inline int hash(uint8_t* out, size_t outlen,
     return -1;
   }
   uint8_t a[Plen] = {0};
-  // Absorb input.
+  /* Absorb input. */
   foldP(in, inlen, xorin);
-  // Xor in the DS and pad frame.
+  /* Xor in the DS and pad frame. */
   a[inlen] ^= delim;
   a[rate - 1] ^= 0x80;
-  // Xor in the last block.
+  /* Xor in the last block. */
   xorin(a, in, inlen);
-  // Apply P
+  /* Apply P */
   P(a);
-  // Squeeze output.
+  /* Squeeze output. */
   foldP(out, outlen, setout);
   setout(a, out, outlen);
-  memset_s(a, 200, 0, 200);
+  memset(a, 0, 200);
   return 0;
 }
 
@@ -151,6 +151,14 @@ static inline int hash(uint8_t* out, size_t outlen,
     }                                                             \
     return hash(out, outlen, in, inlen, 200 - (bits / 4), 0x06);  \
   }
+#define defkeccak(bits)                                             \
+  int keccak_##bits(uint8_t* out, size_t outlen,                    \
+                  const uint8_t* in, size_t inlen) {              \
+    if (outlen > (bits/8)) {                                      \
+      return -1;                                                  \
+    }                                                             \
+    return hash(out, outlen, in, inlen, 200 - (bits / 4), 0x01);  \
+  }
 
 /*** FIPS202 SHAKE VOFs ***/
 defshake(128)
@@ -161,3 +169,8 @@ defsha3(224)
 defsha3(256)
 defsha3(384)
 defsha3(512)
+
+defkeccak(224)
+defkeccak(256)
+defkeccak(384)
+defkeccak(512)
