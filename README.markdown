@@ -4,7 +4,7 @@ Uses sha3 hash from [keccak-tiny](https://github.com/coruus/keccak-tiny)
 
 ## Building
 
-    ```$ PATH="`pwd`:$PATH" do.sh```
+    $ PATH="`pwd`:$PATH" do.sh
 
 ## Usage
  
