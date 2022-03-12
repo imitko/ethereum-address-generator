@@ -14,6 +14,6 @@ priv=$(echo -n $priv | cut -c2-)
 public_key=$(openssl ec -inform DER -text -noout -in <(cat <(echo -n "302e0201010420") <(echo -n $priv) <(echo -n "a00706052b8104000a") | \
     xxd -r -p) 2>/dev/null | tail -6 | head -5 | sed 's/[ :]//g' | tr -d '\n' | cut -c3- && echo)
 echo "Public Key: "$public_key
-eth_address=$(printf $public_key | xxd -p -r | ./keccak -e && echo)
+eth_address=$(echo -n $public_key | xxd -p -r | ./keccak -e && echo)
 echo "ETH Address:" $eth_address
 
